@@ -34,6 +34,7 @@ android {
 
     kotlinOptions {
         jvmTarget = '1.8'
+        freeCompilerArgs += ["-Xskip-metadata-version-check"]
     }
 
     sourceSets {
@@ -41,7 +42,6 @@ android {
     }
 
     defaultConfig {
-        // Mijoz ilovasi uchun alohida mustaqil ID:
         applicationId "com.elegant.taxi.client"
         minSdkVersion 21
         targetSdkVersion 34
@@ -63,4 +63,7 @@ flutter {
     source '../..'
 }
 
-dependencies {}
+dependencies {
+    implementation 'com.yandex.android:maps.mobile:4.4.0-full'
+    implementation 'androidx.multidex:multidex:2.0.1'
+}
