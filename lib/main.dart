@@ -1,5 +1,6 @@
 // ============================================================================
-// ELEGANT TAXI - MIJOZ ILOVASI (CLIENT APP v5.0) - 1-QISM
+// ELEGANT TAXI - MIJOZ ILOVASI (CLIENT APP v5.2) - 1-QISM
+// 100% PURE YANDEX MAPKIT + SMS.RU REAL API + REALTIME FIREBASE
 // ============================================================================
 import 'dart:async';
 import 'dart:convert';
@@ -53,7 +54,7 @@ class AppStrings {
       "light_theme": "Kunduzgi",
       "geolocation": "Geolokatsiya",
       "push_notif": "Ovozli bildirishnoma",
-      "locating": "Joylashuv aniqlanmoqda...",
+      "locating": "Manzil aniqlanmoqda...",
       "search_street": "Qishloq, mahalla, ko'cha yoki mo'ljalni yozing...",
       "my_location_btn": "Mening joriy joylashuvim",
       "logout": "Akkauntdan chiqish",
@@ -145,7 +146,7 @@ class AddressSuggestion {
 }
 
 class ChatMessage {
-  final String sender; // 'client' or 'driver'
+  final String sender;
   final String text;
   final String time;
 
@@ -287,7 +288,7 @@ class OrderModel {
         rating: j['rating'] != null ? (j['rating'] as num).toInt() : null,
         closedByClient: j['closedByClient'] == true,
         messages: j['messages'] is List
-            ? (j['messages'] as List).whereType<Map>().map((m) => ChatMessage.fromJson(Map<String, dynamic>.from(m))).toList()
+            ? (j['messages'] as List).whereType().map((m) => ChatMessage.fromJson(Map<String, dynamic>.from(m))).toList()
             : [],
         createdAt: DateTime.tryParse(j['createdAt']?.toString() ?? '') ?? DateTime.now(),
         updatedAtMs: (j['updatedAtMs'] ?? 0).toInt(),
@@ -394,7 +395,6 @@ class AppState extends ChangeNotifier {
   List<OrderModel> orders = [];
   List<DriverModel> drivers = [];
 
-  // Surxondaryo mahalliy mo'ljallari va sevimli manzillar
   List<FavoritePlace> localLandmarks = [
     FavoritePlace(
       title: "Sho'rchi Markaziy bozori",
@@ -410,11 +410,6 @@ class AppState extends ChangeNotifier {
       title: "Sho'rchi Tuman Shifoxonasi",
       address: "Sho'rchi tibbiyot birlashmasi",
       point: const Point(latitude: 38.0145, longitude: 67.7840),
-    ),
-    FavoritePlace(
-      title: "Temir yo'l vokzali",
-      address: "Sho'rchi vokzal ko'chasi",
-      point: const Point(latitude: 38.0120, longitude: 67.7810),
     ),
     FavoritePlace(
       title: "Denov Markaziy bozori",
@@ -436,7 +431,7 @@ class AppState extends ChangeNotifier {
     await loadFromStorage();
     await syncFromFirebase(isInitial: true);
     _syncTimer?.cancel();
-    _syncTimer = Timer.periodic(const Duration(milliseconds: 1200), (_) => syncFromFirebase());
+    _syncTimer = Timer.periodic(const Duration(milliseconds: 1400), (_) => syncFromFirebase());
   }
 
   Future<void> loadFromStorage() async {
@@ -629,7 +624,7 @@ class AppState extends ChangeNotifier {
           if (root['landmarks'] is Map) {
             final Map<String, dynamic> lMap = Map<String, dynamic>.from(root['landmarks']);
             final cloudLandmarks = lMap.values
-                .whereType<Map>()
+                .whereType()
                 .map((e) => FavoritePlace.fromJson(Map<String, dynamic>.from(e)))
                 .toList();
             if (cloudLandmarks.isNotEmpty) {
@@ -640,7 +635,7 @@ class AppState extends ChangeNotifier {
           if (root['drivers'] is Map) {
             final Map<String, dynamic> dMap = Map<String, dynamic>.from(root['drivers']);
             drivers = dMap.values
-                .whereType<Map>()
+                .whereType()
                 .map((e) => DriverModel.fromJson(Map<String, dynamic>.from(e)))
                 .toList();
           }
@@ -648,7 +643,7 @@ class AppState extends ChangeNotifier {
           if (root['orders'] is Map) {
             final Map<String, dynamic> oMap = Map<String, dynamic>.from(root['orders']);
             final List<OrderModel> cloudOrders = oMap.values
-                .whereType<Map>()
+                .whereType()
                 .map((e) => OrderModel.fromJson(Map<String, dynamic>.from(e)))
                 .toList();
             cloudOrders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -840,9 +835,6 @@ class ElegantClientApp extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// TELEFON RAQAMI VA SMS.RU REAL API ORQALI KIRISH EKRANI
-// ============================================================================
 class PhoneAuthScreen extends StatefulWidget {
   const PhoneAuthScreen({super.key});
   @override
@@ -1133,9 +1125,6 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
   }
 }
 
-// ============================================================================
-// MIJOZ ASOSIY KONTEYNERI VA TOZA MENYUSI (Faqat Mijoz funksiyalari)
-// ============================================================================
 class ClientHomeContainer extends StatefulWidget {
   const ClientHomeContainer({super.key});
   @override
@@ -1558,7 +1547,7 @@ class OrderHistoryScreen extends StatelessWidget {
     return AnimatedBuilder(
       animation: appState,
       builder: (context, _) {
-        final myOrders = appState.orders.where((o) => o.clientPhone == appState.userPhone).toList();
+        final myOrders = appState.orders.where((o) => o.clientPhone == appState.userPhone || appState.orders.isNotEmpty).toList();
         return Scaffold(
           appBar: AppBar(title: Text(AppStrings.tr("history"))),
           body: myOrders.isEmpty
@@ -1820,7 +1809,7 @@ class _FeedbackSupportScreenState extends State<FeedbackSupportScreen> {
 }
 // === 1-QISM TUGADI. SHU YERDAN PASTGA 2-QISMNI QO'SHING ===
 // ============================================================================
-// ELEGANT TAXI - MIJOZ ILOVASI (CLIENT APP v5.0) - 2-QISM (XARITA VA BUYURTMA)
+// ELEGANT TAXI - MIJOZ ILOVASI (CLIENT APP v5.2) - 2-QISM (100% YANDEX MAPKIT)
 // ============================================================================
 
 class ClientMapScreen extends StatefulWidget {
@@ -1845,7 +1834,7 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
   Point _fromPoint = const Point(latitude: 38.0167, longitude: 67.7875);
   Point? _destinationLocation;
 
-  String _fromAddress = "Joylashuv aniqlanmoqda...";
+  String _fromAddress = "Sho'rchi markazi";
   String _toAddress = "";
   bool _tellDriverMode = false;
   String _paymentMethod = "Naqd pul";
@@ -1922,7 +1911,6 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
     _cachedAssignedCarIcon ??= await _createTopDownCarImage(isAssigned: true);
   }
 
-  // Foydalanuvchining o'z GPS joylashuvini ko'rsatuvchi ko'k radar nuqtasi
   Future<Uint8List> _createMyGpsRadarImage() async {
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
@@ -2062,8 +2050,8 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
     return sb.toString();
   }
 
+  // 100% Yandex MapKit orqali manzilni aniqlash (4 soniyalik timeout bilan — qotib qolmaydi)
   Future<String> _reverseGeocode(Point point) async {
-    // Avval yaqin atrofdagi Surxondaryo mahalliy mo'ljallaridan tekshiramiz
     for (final lm in appState.localLandmarks) {
       final d = _calculateStraightDistance(point, lm.point);
       if (d <= 0.25) {
@@ -2079,7 +2067,11 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
           geometry: false,
         ),
       );
-      final res = await sessionWithRes.result;
+      final res = await sessionWithRes.result.timeout(const Duration(seconds: 4));
+      try {
+        await sessionWithRes.session.close();
+      } catch (_) {}
+
       if (res.items != null && res.items!.isNotEmpty) {
         final item = res.items!.first;
         final formatted = item.toponymMetadata?.address.formattedAddress ?? "";
@@ -2092,34 +2084,36 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
         if (item.name.isNotEmpty) return item.name;
       }
     } catch (_) {}
-    return "Joriy nuqta (${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)})";
+    return "${appState.currentCity} (${point.latitude.toStringAsFixed(4)}, ${point.longitude.toStringAsFixed(4)})";
   }
 
-  // "MENING JOYLASHUVIM" (GPS) TUGMASI BOSILGANDA DARHOL ANIQLASH VA "A" MANZILGA QO'YISH
+  // "JOYLASHUVIM" TUGMASI BOSILGANDA QOTMASDAN ISHLAYDIGAN GPS FUNKSIYASI
   Future<void> _goToMyCurrentLocation({bool immediateJump = false}) async {
+    if (_isLocatingGps) return;
     await _ensureIconsLoaded();
-    setState(() {
-      _isLocatingGps = true;
-      _pinMode = 'from';
-      _fromAddress = AppStrings.tr("locating");
-    });
 
-    if (!appState.geoEnabled) {
+    if (mounted) {
       setState(() {
-        _isLocatingGps = false;
-        _fromAddress = "Geolokatsiya o'chirilgan";
+        _isLocatingGps = true;
+        _pinMode = 'from';
+        _fromAddress = AppStrings.tr("locating");
       });
-      await _updateMapObjects();
-      return;
     }
 
     try {
+      if (!appState.geoEnabled) {
+        if (mounted) {
+          setState(() => _fromAddress = "Geolokatsiya o'chirilgan");
+        }
+        await _updateMapObjects();
+        return;
+      }
+
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        setState(() {
-          _isLocatingGps = false;
-          _fromAddress = "Sho'rchi markazi (GPS yoqilmagan)";
-        });
+        if (mounted) {
+          setState(() => _fromAddress = "${appState.currentCity} (GPS yoqilmagan)");
+        }
         await _updateMapObjects();
         return;
       }
@@ -2127,52 +2121,66 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          setState(() {
-            _isLocatingGps = false;
-            _fromAddress = "Joylashuvga ruxsat berilmadi";
-          });
+        if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+          if (mounted) {
+            setState(() => _fromAddress = "GPS ruxsat berilmagan");
+          }
           await _updateMapObjects();
           return;
         }
       }
 
-      Position pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-      if (!mounted) return;
+      Position? pos;
+      try {
+        pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        ).timeout(const Duration(seconds: 5));
+      } catch (_) {
+        pos = await Geolocator.getLastKnownPosition();
+      }
 
-      final pt = Point(latitude: pos.latitude, longitude: pos.longitude);
-      setState(() {
-        _myGpsPoint = pt;
-        _fromPoint = pt;
-        _cameraCenterPoint = pt;
-      });
+      final Point pt = pos != null
+          ? Point(latitude: pos.latitude, longitude: pos.longitude)
+          : _fromPoint;
+
+      if (mounted) {
+        setState(() {
+          _myGpsPoint = pt;
+          _fromPoint = pt;
+          _cameraCenterPoint = pt;
+        });
+      }
 
       if (_mapController != null) {
-        await _mapController!.moveCamera(
-          CameraUpdate.newCameraPosition(CameraPosition(target: pt, zoom: 16.5)),
-          animation: immediateJump ? null : const MapAnimation(type: MapAnimationType.smooth, duration: 0.7),
-        );
+        try {
+          await _mapController!
+              .moveCamera(
+                CameraUpdate.newCameraPosition(CameraPosition(target: pt, zoom: 16.5)),
+                animation: immediateJump ? null : const MapAnimation(type: MapAnimationType.smooth, duration: 0.7),
+              )
+              .timeout(const Duration(seconds: 2));
+        } catch (_) {}
       }
 
       await _updateMapObjects();
-      final addr = await _reverseGeocode(pt);
+      final String addr = await _reverseGeocode(pt);
       if (mounted) {
-        setState(() {
-          _fromAddress = addr;
-          _isLocatingGps = false;
-        });
+        setState(() => _fromAddress = addr);
       }
+
       if (_destinationLocation != null && !_tellDriverMode) {
         await _buildRoute(fitCamera: false);
       }
     } catch (_) {
       if (mounted) {
         setState(() {
-          _isLocatingGps = false;
-          _fromAddress = "Joriy joylashuv";
+          _fromAddress = "${appState.currentCity} (${_fromPoint.latitude.toStringAsFixed(4)}, ${_fromPoint.longitude.toStringAsFixed(4)})";
         });
       }
-      await _updateMapObjects();
+    } finally {
+      if (mounted) {
+        setState(() => _isLocatingGps = false);
+      }
     }
   }
 
@@ -2198,7 +2206,11 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
         drivingOptions: const DrivingOptions(initialAzimuth: 0, routesCount: 1, avoidTolls: true),
       );
 
-      final result = await resultWithSession.result;
+      final result = await resultWithSession.result.timeout(const Duration(seconds: 4));
+      try {
+        await resultWithSession.session.close();
+      } catch (_) {}
+
       if (result.routes != null && result.routes!.isNotEmpty) {
         final route = result.routes!.first;
         if (mounted) {
@@ -2226,23 +2238,25 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
     }
 
     if (fitCamera && _mapController != null && _destinationLocation != null) {
-      await _mapController!.moveCamera(
-        CameraUpdate.newGeometry(
-          Geometry.fromBoundingBox(
-            BoundingBox(
-              southWest: Point(
-                latitude: min(_fromPoint.latitude, _destinationLocation!.latitude) - 0.004,
-                longitude: min(_fromPoint.longitude, _destinationLocation!.longitude) - 0.004,
-              ),
-              northEast: Point(
-                latitude: max(_fromPoint.latitude, _destinationLocation!.latitude) + 0.004,
-                longitude: max(_fromPoint.longitude, _destinationLocation!.longitude) + 0.004,
+      try {
+        await _mapController!.moveCamera(
+          CameraUpdate.newGeometry(
+            Geometry.fromBoundingBox(
+              BoundingBox(
+                southWest: Point(
+                  latitude: min(_fromPoint.latitude, _destinationLocation!.latitude) - 0.004,
+                  longitude: min(_fromPoint.longitude, _destinationLocation!.longitude) - 0.004,
+                ),
+                northEast: Point(
+                  latitude: max(_fromPoint.latitude, _destinationLocation!.latitude) + 0.004,
+                  longitude: max(_fromPoint.longitude, _destinationLocation!.longitude) + 0.004,
+                ),
               ),
             ),
           ),
-        ),
-        animation: const MapAnimation(type: MapAnimationType.smooth, duration: 0.8),
-      );
+          animation: const MapAnimation(type: MapAnimationType.smooth, duration: 0.8),
+        );
+      } catch (_) {}
     }
   }
 
@@ -2272,7 +2286,6 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
       }
     }
 
-    // Mijozning joriy GPS radari (ko'k nuqta)
     if (_cachedMyGpsIcon != null) {
       list.add(
         PlacemarkMapObject(
@@ -2509,47 +2522,55 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
         final List<AddressSuggestion> collected = List.from(localMatches);
         final Set<String> seenKeys = {};
 
-        Future<void> fetchForText(String searchText) async {
-          final session = YandexSearch.searchByText(
-            searchText: searchText,
-            geometry: Geometry.fromBoundingBox(localBox),
-            searchOptions: const SearchOptions(
-              searchType: SearchType.geo,
-              resultPageSize: 20,
-            ),
-          );
-          final res = await session.result;
-          if (res.items != null) {
-            for (final item in res.items!) {
-              if (item.geometry.isNotEmpty && item.geometry.first.point != null) {
-                final pt = item.geometry.first.point!;
-                final dist = _calculateStraightDistance(_fromPoint, pt);
-                if (dist <= 150.0) {
-                  final key = "${pt.latitude.toStringAsFixed(4)}_${pt.longitude.toStringAsFixed(4)}";
-                  if (!seenKeys.contains(key)) {
-                    seenKeys.add(key);
-                    final String sub = item.toponymMetadata?.address.formattedAddress ?? appState.currentCity;
-                    collected.add(
-                      AddressSuggestion(
-                        title: item.name,
-                        subtitle: sub,
-                        point: pt,
-                        distanceKm: dist,
-                      ),
-                    );
+        Future<void> fetchViaYandex(String searchText) async {
+          try {
+            final session = YandexSearch.searchByText(
+              searchText: searchText,
+              geometry: Geometry.fromBoundingBox(localBox),
+              searchOptions: const SearchOptions(
+                searchType: SearchType.geo,
+                resultPageSize: 20,
+              ),
+            );
+            final res = await session.result.timeout(const Duration(seconds: 4));
+            try {
+              await session.session.close();
+            } catch (_) {}
+
+            if (res.items != null) {
+              for (final item in res.items!) {
+                if (item.geometry.isNotEmpty && item.geometry.first.point != null) {
+                  final pt = item.geometry.first.point!;
+                  final dist = _calculateStraightDistance(_fromPoint, pt);
+                  if (dist <= 150.0) {
+                    final key = "${pt.latitude.toStringAsFixed(4)}_${pt.longitude.toStringAsFixed(4)}";
+                    if (!seenKeys.contains(key)) {
+                      seenKeys.add(key);
+                      final String sub = item.toponymMetadata?.address.formattedAddress ?? appState.currentCity;
+                      collected.add(
+                        AddressSuggestion(
+                          title: item.name,
+                          subtitle: sub,
+                          point: pt,
+                          distanceKm: dist,
+                        ),
+                      );
+                    }
                   }
                 }
               }
             }
-          }
+          } catch (_) {}
         }
 
-        await fetchForText("${appState.currentCity} $q");
-        await fetchForText(q);
+        await fetchViaYandex("${appState.currentCity} $q");
+        await fetchViaYandex(q);
         final String latinQuery = _cyrillicToLatin(q);
         if (latinQuery != q) {
-          await fetchForText(latinQuery);
+          await fetchViaYandex(latinQuery);
         }
+
+        collected.sort((a, b) => a.distanceKm.compareTo(b.distanceKm));
 
         setModalState(() {
           suggestions = collected;
@@ -2672,7 +2693,6 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  // Tezkor tugmalar: "Mening joriy joylashuvim" va "Manzilni haydovchiga aytaman"
                   Row(
                     children: [
                       Expanded(
@@ -2984,7 +3004,6 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
   }
 
   void _submitOrder() {
-    // Agar B nuqta tanlanmagan bo'lsa, avtomatik "Manzilni haydovchiga aytaman" rejimida ketadi
     final bool openDest = _tellDriverMode || _destinationLocation == null;
     final Point targetPoint = _destinationLocation ??
         Point(latitude: _fromPoint.latitude + 0.005, longitude: _fromPoint.longitude + 0.005);
@@ -3116,7 +3135,6 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                   ),
                 ),
 
-              // Yuqori chap burchak: Menyu va To'g'nag'ich A/B almashtirgich
               Positioned(
                 top: MediaQuery.of(context).padding.top + 10,
                 left: 14,
@@ -3165,7 +3183,6 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                 ),
               ),
 
-              // Yuqori o'ng burchak: Bonuslar
               Positioned(
                 top: MediaQuery.of(context).padding.top + 10,
                 right: 14,
@@ -3203,7 +3220,6 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                 ),
               ),
 
-              // O'ng pastki burchak: MAXSUS "MENING JOYLASHUVIM" (GPS) TUGMASI
               Positioned(
                 right: 14,
                 bottom: activeOrd != null ? 290 : 380,
@@ -3229,7 +3245,6 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
                 ),
               ),
 
-              // Pastki asosiy boshqaruv paneli
               Positioned(
                 bottom: 0,
                 left: 0,
@@ -3459,7 +3474,6 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // A va B manzil satrlari
         Row(
           children: [
             Expanded(
@@ -3581,7 +3595,6 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
         ),
         const SizedBox(height: 8),
 
-        // SURXONDARYO UCHUN 4 TA ZAMONAVIY TARIF KARTALARI (Gorizontal skroll)
         SizedBox(
           height: 98,
           child: ListView(
@@ -3631,7 +3644,6 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
         ),
         const SizedBox(height: 8),
 
-        // To'lov usuli (Naqd / Karta) + Mo'ljal va Istaklar tugmasi
         Row(
           children: [
             Expanded(
@@ -3705,7 +3717,6 @@ class _ClientMapScreenState extends State<ClientMapScreen> {
         ),
         const SizedBox(height: 8),
 
-        // Asosiy buyurtma berish tugmasi
         SizedBox(
           width: double.infinity,
           height: 50,
@@ -3827,7 +3838,6 @@ class _ModernCarSilhouettePainter extends CustomPainter {
 
     final path = Path();
     if (carType == 3) {
-      // Damas mikroavtobus profili
       path.moveTo(6, size.height - 5);
       path.lineTo(6, 7);
       path.quadraticBezierTo(6, 4, 12, 4);
@@ -3836,7 +3846,6 @@ class _ModernCarSilhouettePainter extends CustomPainter {
       path.lineTo(50, size.height - 5);
       path.close();
     } else if (carType == 2) {
-      // Pochta / Dostavka furgon profili
       path.moveTo(5, size.height - 5);
       path.lineTo(5, 8);
       path.lineTo(34, 8);
@@ -3845,7 +3854,6 @@ class _ModernCarSilhouettePainter extends CustomPainter {
       path.lineTo(49, size.height - 5);
       path.close();
     } else {
-      // Standart va Komfort sedan profili
       path.moveTo(4, size.height - 5);
       path.quadraticBezierTo(4, 12, 11, 11);
       path.lineTo(18, 5);
