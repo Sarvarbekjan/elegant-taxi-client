@@ -1,0 +1,55 @@
+name: Build Elegant Taxi Client APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repozitoriyni yuklab olish
+        uses: actions/checkout@v4
+
+      - name: Java 17 o'rnatish
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Flutter 3.19.6 o'rnatish
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.6'
+          channel: 'stable'
+
+      - name: Loyiha strukturasini avtomatik to'ldirish va kodlarni joylash
+        run: |
+          mkdir -p /tmp/custom_backup
+          cp pubspec.yaml /tmp/custom_backup/
+          cp lib/main.dart /tmp/custom_backup/
+          cp android/app/src/main/AndroidManifest.xml /tmp/custom_backup/
+          cp android/app/src/main/kotlin/com/example/elegant_taxi/MainActivity.kt /tmp/custom_backup/
+          cp android/app/build.gradle /tmp/custom_backup/
+
+          flutter create --org com.example --project-name elegant_taxi .
+
+          cp /tmp/custom_backup/pubspec.yaml pubspec.yaml
+          cp /tmp/custom_backup/main.dart lib/main.dart
+          cp /tmp/custom_backup/AndroidManifest.xml android/app/src/main/AndroidManifest.xml
+          mkdir -p android/app/src/main/kotlin/com/example/elegant_taxi
+          cp /tmp/custom_backup/MainActivity.kt android/app/src/main/kotlin/com/example/elegant_taxi/MainActivity.kt
+          cp /tmp/custom_backup/build.gradle android/app/build.gradle
+
+      - name: Paketlarni yuklash (pub get)
+        run: flutter pub get
+
+      - name: Release APK yig'ish
+        run: flutter build apk --release --no-tree-shake-icons
+
+      - name: Tayyor APK faylni GitHub'ga yuklash
+        uses: actions/upload-artifact@v4
+        with:
+          name: Elegant-Taxi-Mijoz-APK
+          path: build/app/outputs/flutter-apk/app-release.apk
