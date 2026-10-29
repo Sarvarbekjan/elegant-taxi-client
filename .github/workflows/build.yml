@@ -24,7 +24,7 @@ jobs:
           flutter-version: '3.19.6'
           channel: 'stable'
 
-      - name: Loyiha strukturasini avtomatik to'ldirish va kodlarni joylash
+      - name: Loyiha strukturasini avtomatik to'ldirish va Kotlinni yangilash
         run: |
           mkdir -p /tmp/custom_backup
           cp pubspec.yaml /tmp/custom_backup/
@@ -34,6 +34,12 @@ jobs:
           cp android/app/build.gradle /tmp/custom_backup/
 
           flutter create --org com.example --project-name elegant_taxi .
+
+          # Kotlin versiyasini 1.7.10 dan 1.9.10 ga avtomatik yangilash
+          sed -i 's/1.7.10/1.9.10/g' android/settings.gradle || true
+          sed -i 's/1.7.10/1.9.10/g' android/build.gradle || true
+          sed -i 's/1.8.10/1.9.10/g' android/settings.gradle || true
+          sed -i 's/1.8.10/1.9.10/g' android/build.gradle || true
 
           cp /tmp/custom_backup/pubspec.yaml pubspec.yaml
           cp /tmp/custom_backup/main.dart lib/main.dart
